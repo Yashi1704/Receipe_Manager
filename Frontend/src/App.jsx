@@ -1,8 +1,14 @@
 import Navbar from "./components/Navbar";
+import { AuthProvider } from "./context/AuthContext";
 function App() {
-  return <div>
-    <Navbar />
-  </div>;  
+  return(
+    <AuthProvider>
+       <Navbar />
+
+    </AuthProvider>
+   
+
+);  
 }
 
 export default App;
