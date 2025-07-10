@@ -12,12 +12,29 @@ router.get("/", async (req, res) => {
     const recipes = await Recipe.find(query);
     res.json(recipes);
   } catch (error) {
-    console.error("🔥 Error in GET /api/recipes:", error); // log full error
+    console.error("🔥 Error in GET /api/recipes:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-// POST - Create Recipe
+// 🔍 SEARCH Recipes by title or ingredients
+router.get("/search", async (req, res) => {
+  const { query } = req.query;
+  try {
+    const recipes = await Recipe.find({
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { ingredients: { $regex: query, $options: "i" } },
+      ],
+    });
+    res.json(recipes);
+  } catch (error) {
+    console.error("🔥 Error in GET /api/recipes/search:", error);
+    res.status(500).json({ message: "Search error", error: error.message });
+  }
+});
+
+// 📝 POST - Create Recipe
 router.post("/", protect, async (req, res) => {
   const { title, ingredients, instructions, category, photoUrl, cookingTime } =
     req.body;
@@ -51,7 +68,7 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// GET Single Recipe
+// 📄 GET Single Recipe
 router.get("/:id", async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -65,7 +82,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// PUT - Update Recipe
+// ✏️ PUT - Update Recipe
 router.put("/:id", protect, async (req, res) => {
   const { title, ingredients, instructions, category, photoUrl, cookingTime } =
     req.body;
@@ -95,7 +112,7 @@ router.put("/:id", protect, async (req, res) => {
   }
 });
 
-// DELETE - Delete Recipe
+// ❌ DELETE - Delete Recipe
 router.delete("/:id", protect, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
