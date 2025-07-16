@@ -21,7 +21,7 @@ const Navbar = () => {
             alt="Logo"
             className="h-8 w-8 object-cover"
           />
-          <h1 className="text-2xl font-bold text-blue-600 font-poppins">
+          <h1 className="text-2xl font-bold text-black-600 font-poppins">
             Receipe Manager
           </h1>
         </Link>

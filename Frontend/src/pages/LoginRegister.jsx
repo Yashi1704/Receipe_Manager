@@ -57,7 +57,7 @@ const LoginRegister = () => {
         {/* Right Panel */}
         <div className="w-full md:w-1/2 p-8">
           <h2 className="text-2xl font-bold text-center text-blue-600 mb-2">
-            {isLogin ? "Login to Recipe Manager" : "Register for Recipe Manager"}
+            {isLogin ? "Login to Receipe Manager" : "Register for Receipe Manager"}
           </h2>
 
           <p className="text-sm text-center text-gray-500 mb-6">

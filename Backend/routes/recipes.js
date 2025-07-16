@@ -4,12 +4,19 @@ import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// 🔐 GET All Recipes (with optional category filter)
+/**
+ * 🔐 GET All Recipes (only of logged-in user, optional category)
+ */
 router.get("/", protect, async (req, res) => {
   const { category } = req.query;
+
   try {
-    const query = category ? { category } : {};
-    const recipes = await Recipe.find(query);
+    const filter = {
+      createdBy: req.user._id, // ✅ only user's own recipes
+      ...(category ? { category } : {}),
+    };
+
+    const recipes = await Recipe.find(filter).sort({ createdAt: -1 });
     res.json(recipes);
   } catch (error) {
     console.error("🔥 Error in GET /api/recipes:", error);
@@ -17,11 +24,14 @@ router.get("/", protect, async (req, res) => {
   }
 });
 
-// 🔐 SEARCH Recipes by title or ingredients
+/**
+ * 🔐 SEARCH Recipes by title or ingredients (only user's)
+ */
 router.get("/search", protect, async (req, res) => {
   const { query } = req.query;
   try {
     const recipes = await Recipe.find({
+      createdBy: req.user._id, // ✅ only user's own recipes
       $or: [
         { title: { $regex: query, $options: "i" } },
         { ingredients: { $regex: query, $options: "i" } },
@@ -34,20 +44,14 @@ router.get("/search", protect, async (req, res) => {
   }
 });
 
-// 🔐 POST - Create Recipe
+/**
+ * 🔐 POST - Create Recipe
+ */
 router.post("/", protect, async (req, res) => {
-  const { title, ingredients, instructions, category, photoUrl, cookingTime } =
-    req.body;
+  const { title, ingredients, instructions, category, photoUrl, cookingTime } = req.body;
 
   try {
-    if (
-      !title ||
-      !ingredients ||
-      !instructions ||
-      !category ||
-      !photoUrl ||
-      !cookingTime
-    ) {
+    if (!title || !ingredients || !instructions || !category || !photoUrl || !cookingTime) {
       return res.status(400).json({ message: "Please fill all fields" });
     }
 
@@ -56,9 +60,9 @@ router.post("/", protect, async (req, res) => {
       ingredients,
       instructions,
       category,
-      cookingTime,
       photoUrl,
-      createdBy: req.user._id,
+      cookingTime,
+      createdBy: req.user._id, // ✅ assign owner
     });
 
     res.status(201).json(recipe);
@@ -68,13 +72,20 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// 🔐 GET Single Recipe
+/**
+ * 🔐 GET Single Recipe (only if it belongs to user)
+ */
 router.get("/:id", protect, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) {
       return res.status(404).json({ message: "Recipe not found" });
     }
+
+    if (recipe.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     res.json(recipe);
   } catch (err) {
     console.error("🔥 Error fetching recipe:", err);
@@ -82,10 +93,11 @@ router.get("/:id", protect, async (req, res) => {
   }
 });
 
-// 🔐 PUT - Update Recipe
+/**
+ * 🔐 PUT - Update Recipe (only if owned)
+ */
 router.put("/:id", protect, async (req, res) => {
-  const { title, ingredients, instructions, category, photoUrl, cookingTime } =
-    req.body;
+  const { title, ingredients, instructions, category, photoUrl, cookingTime } = req.body;
 
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -94,7 +106,7 @@ router.put("/:id", protect, async (req, res) => {
     }
 
     if (recipe.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     recipe.title = title || recipe.title;
@@ -112,7 +124,9 @@ router.put("/:id", protect, async (req, res) => {
   }
 });
 
-// 🔐 DELETE - Delete Recipe
+/**
+ * 🔐 DELETE - Recipe (only if owned)
+ */
 router.delete("/:id", protect, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
@@ -121,11 +135,11 @@ router.delete("/:id", protect, async (req, res) => {
     }
 
     if (recipe.createdBy.toString() !== req.user._id.toString()) {
-      return res.status(401).json({ message: "Not authorized" });
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     await recipe.deleteOne();
-    res.json({ message: "Recipe deleted" });
+    res.json({ message: "Recipe deleted successfully" });
   } catch (err) {
     console.error("🔥 Error deleting recipe:", err);
     res.status(500).json({ message: "Server error" });
