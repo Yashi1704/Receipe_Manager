@@ -1,10 +1,12 @@
 import axios from "axios";
 import React, { useEffect, useState, useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // ✅ useNavigate added
 import { AuthContext } from "../context/AuthContext";
 
 const Home = () => {
   const { user } = useContext(AuthContext);
+  const navigate = useNavigate(); // ✅ navigation hook
+
   const [recipes, setRecipes] = useState([]);
   const [category, setCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
@@ -57,21 +59,20 @@ const Home = () => {
     }
   };
 
+  // ✅ Redirect to /login if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, [user, navigate]);
+
   useEffect(() => {
     if (user && !isSearching) {
       fetchRecipes();
     }
   }, [category, user]);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
-        <div className="text-center text-xl font-semibold text-red-600 bg-white px-6 py-4 rounded shadow">
-          Please log in to view recipes.
-        </div>
-      </div>
-    );
-  }
+  if (!user) return null; // Avoid UI flash before redirect
 
   return (
     <div
