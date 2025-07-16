@@ -4,8 +4,8 @@ import { protect } from "../middleware/auth.js";
 
 const router = express.Router();
 
-// 🔄 GET All Recipes (with optional category filter)
-router.get("/", async (req, res) => {
+// 🔐 GET All Recipes (with optional category filter)
+router.get("/", protect, async (req, res) => {
   const { category } = req.query;
   try {
     const query = category ? { category } : {};
@@ -17,8 +17,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 🔍 SEARCH Recipes by title or ingredients
-router.get("/search", async (req, res) => {
+// 🔐 SEARCH Recipes by title or ingredients
+router.get("/search", protect, async (req, res) => {
   const { query } = req.query;
   try {
     const recipes = await Recipe.find({
@@ -34,7 +34,7 @@ router.get("/search", async (req, res) => {
   }
 });
 
-// 📝 POST - Create Recipe
+// 🔐 POST - Create Recipe
 router.post("/", protect, async (req, res) => {
   const { title, ingredients, instructions, category, photoUrl, cookingTime } =
     req.body;
@@ -68,8 +68,8 @@ router.post("/", protect, async (req, res) => {
   }
 });
 
-// 📄 GET Single Recipe
-router.get("/:id", async (req, res) => {
+// 🔐 GET Single Recipe
+router.get("/:id", protect, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);
     if (!recipe) {
@@ -82,7 +82,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// ✏️ PUT - Update Recipe
+// 🔐 PUT - Update Recipe
 router.put("/:id", protect, async (req, res) => {
   const { title, ingredients, instructions, category, photoUrl, cookingTime } =
     req.body;
@@ -112,7 +112,7 @@ router.put("/:id", protect, async (req, res) => {
   }
 });
 
-// ❌ DELETE - Delete Recipe
+// 🔐 DELETE - Delete Recipe
 router.delete("/:id", protect, async (req, res) => {
   try {
     const recipe = await Recipe.findById(req.params.id);

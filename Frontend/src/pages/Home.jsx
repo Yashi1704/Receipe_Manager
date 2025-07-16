@@ -1,8 +1,10 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const Home = () => {
+  const { user } = useContext(AuthContext);
   const [recipes, setRecipes] = useState([]);
   const [category, setCategory] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
@@ -22,7 +24,12 @@ const Home = () => {
       const res = await axios.get(
         `/api/recipes/${
           category && category !== "All" ? `?category=${category}` : ""
-        }`
+        }`,
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
       );
       setRecipes(res.data);
     } catch (err) {
@@ -39,7 +46,11 @@ const Home = () => {
 
     try {
       setIsSearching(true);
-      const res = await axios.get(`/api/recipes/search?query=${searchTerm}`);
+      const res = await axios.get(`/api/recipes/search?query=${searchTerm}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
       setRecipes(res.data);
     } catch (err) {
       console.error("Error searching recipes:", err);
@@ -47,10 +58,20 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (!isSearching) {
+    if (user && !isSearching) {
       fetchRecipes();
     }
-  }, [category]);
+  }, [category, user]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-center text-xl font-semibold text-red-600 bg-white px-6 py-4 rounded shadow">
+          Please log in to view recipes.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
